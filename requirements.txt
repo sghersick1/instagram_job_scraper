@@ -1,0 +1,13 @@
+playwright==1.44.*
+instaloader>=4.10
+requests>=2.31
+pytesseract==0.3.*
+Pillow==10.*
+anthropic>=0.40.0
+gspread==6.*
+google-auth==2.*
+APScheduler==3.10.*
+python-dotenv==1.0.*
+
+# Alternative OCR with better accuracy on stylized fonts (heavy ~2GB PyTorch dep):
+# easyocr==1.7.*
