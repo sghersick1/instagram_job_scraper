@@ -1,0 +1,8 @@
+services:
+  scraper:
+    build: .
+    env_file: .env
+    volumes:
+      # Mount local session.json directly — skips GCS download for local testing
+      - ./session.json:/app/session.json
+      - ./.user_id_cache.json:/app/.user_id_cache.json

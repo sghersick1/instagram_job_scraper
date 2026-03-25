@@ -1,0 +1,12 @@
+.env
+session.json
+.user_id_cache.json
+screenshots/
+logs/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.git/
+raw.json
+output.csv

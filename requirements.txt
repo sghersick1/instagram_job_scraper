@@ -1,4 +1,5 @@
 playwright==1.44.*
+google-cloud-storage>=2.14
 instaloader>=4.10
 requests>=2.31
 pytesseract==0.3.*
