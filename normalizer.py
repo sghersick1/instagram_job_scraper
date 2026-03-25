@@ -32,7 +32,7 @@ Rules for full extraction:
 JSON schema:
 {
   "category": "internship" | "hackathon",
-  "company_or_org": string | null,
+  "company": string | null,
   "title": string | null,
   "deadline": string | null,
   "location": string | null,
@@ -65,7 +65,7 @@ def normalize(account: str, captured_at: str, raw_text: str, links: list[str]) -
         "raw_text": raw_text,
         "link_url": links[0] if links else None,
         "category": "other",
-        "company_or_org": None,
+        "company": None,
         "title": None,
         "deadline": None,
         "location": None,
