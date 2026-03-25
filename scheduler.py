@@ -24,10 +24,10 @@ def run_once(log_path: str | None = None) -> None:
 
         # Filter 1: no link sticker → not an internship/hackathon post, skip entirely
         if not extraction["links"]:
-            print(f"[pipeline] No link sticker — skipping frame: {frame.screenshot_path}")
+            print(f"[pipeline] No link sticker — skipping frame ({frame.account} @ {frame.captured_at})")
             continue
 
-        print(f"[pipeline] Extracting: {frame.screenshot_path} (link: {extraction['links'][0]})")
+        print(f"[pipeline] Extracting: @{frame.account} @ {frame.captured_at} (link: {extraction['links'][0]})")
         record = normalize(
             account=frame.account,
             captured_at=frame.captured_at,

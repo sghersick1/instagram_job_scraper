@@ -1,7 +1,7 @@
-"""Content Extraction — OCR + text cleanup per story frame."""
+"""Content Extraction — in-memory OCR from story image bytes."""
 
+import io
 import re
-from pathlib import Path
 
 from PIL import Image, ImageFilter, ImageEnhance
 import pytesseract
@@ -10,23 +10,17 @@ from scraper import StoryFrame
 
 
 # ---------------------------------------------------------------------------
-# OCR preprocessing
+# OCR (operates on bytes — no disk I/O)
 # ---------------------------------------------------------------------------
 
-def _preprocess_for_ocr(image_path: str) -> Image.Image:
-    img = Image.open(image_path).convert("L")          # grayscale
-    img = ImageEnhance.Contrast(img).enhance(2.0)      # boost contrast
-    img = img.filter(ImageFilter.SHARPEN)              # sharpen edges
-    return img
-
-
-def _ocr_screenshot(screenshot_path: str) -> str:
+def _ocr_bytes(image_bytes: bytes) -> str:
     try:
-        img = _preprocess_for_ocr(screenshot_path)
-        text = pytesseract.image_to_string(img, config="--psm 6")
-        return text.strip()
+        img = Image.open(io.BytesIO(image_bytes)).convert("L")
+        img = ImageEnhance.Contrast(img).enhance(2.0)
+        img = img.filter(ImageFilter.SHARPEN)
+        return pytesseract.image_to_string(img, config="--psm 6").strip()
     except Exception as exc:
-        print(f"[extractor] OCR failed for {screenshot_path}: {exc}")
+        print(f"[extractor] OCR failed: {exc}")
         return ""
 
 
@@ -47,23 +41,12 @@ def _extract_urls_from_text(text: str) -> list[str]:
 
 def extract(frame: StoryFrame) -> dict:
     """
-    Given a StoryFrame, return a dict with:
-      - raw_text: story text (DOM overlays preferred; OCR fallback if DOM is empty)
+    Given a StoryFrame, return:
+      - raw_text: OCR'd text from the story image (in memory, no disk writes)
       - links: deduplicated list of destination URLs
-
-    Instagram stories are videos — DOM text overlays render regardless of playback.
-    OCR is unreliable when video fails to load, so it is only used if DOM yields nothing.
     """
-    raw_text = frame.dom_text.strip()
+    raw_text = _ocr_bytes(frame.image_bytes) if frame.image_bytes else ""
 
-    # OCR fallback: only if DOM extracted nothing useful
-    if not raw_text:
-        ocr_text = _ocr_screenshot(frame.screenshot_path)
-        if ocr_text:
-            raw_text = ocr_text
-
-    # Links come from the scraper's DOM link extraction (l.instagram.com decoder)
-    # Also catch any plain URLs that appear in text stickers
     all_links = list(frame.links)
     for url in _extract_urls_from_text(raw_text):
         if url not in all_links:

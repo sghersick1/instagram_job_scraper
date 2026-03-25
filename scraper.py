@@ -1,12 +1,12 @@
 """Story Capture Agent — fetches story frames via Instagram's mobile API."""
 
+import json
 import pickle
 import traceback
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-import json
 import requests
 import instaloader
 
@@ -30,9 +30,9 @@ _IG_APP_ID = "936619743392459"  # Instagram web app ID
 @dataclass
 class StoryFrame:
     account: str
-    captured_at: str       # ISO-8601 UTC
-    screenshot_path: str   # path to downloaded media file
-    dom_text: str          # always empty; extractor OCRs the media file
+    captured_at: str         # ISO-8601 UTC
+    image_bytes: bytes       # raw image data in memory — never written to disk
+    dom_text: str            # always empty; extractor OCRs image_bytes
     links: list[str] = field(default_factory=list)
 
 
@@ -123,18 +123,17 @@ def _extract_link_from_item(item: dict) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# Media download
+# Media fetch (in memory — no disk writes)
 # ---------------------------------------------------------------------------
 
-def _download_media(url: str, dest: Path) -> bool:
+def _fetch_media_bytes(url: str) -> bytes | None:
     try:
         resp = requests.get(url, timeout=30)
         resp.raise_for_status()
-        dest.write_bytes(resp.content)
-        return True
+        return resp.content
     except Exception as exc:
-        print(f"[scraper] Media download failed: {exc}")
-        return False
+        print(f"[scraper] Media fetch failed: {exc}")
+        return None
 
 
 def _best_media_url(item: dict) -> str | None:
@@ -164,8 +163,6 @@ def capture_stories(log_path: str | None = None) -> list[StoryFrame]:
 
     for account in config.TARGET_ACCOUNTS:
         print(f"[scraper] Fetching stories for @{account}...")
-        account_dir = Path(config.SCREENSHOTS_DIR) / account
-        account_dir.mkdir(parents=True, exist_ok=True)
 
         try:
             user_id = _get_user_id(session, account)
@@ -188,11 +185,15 @@ def capture_stories(log_path: str | None = None) -> list[StoryFrame]:
                 taken_at = item.get("taken_at", 0)
                 ts = datetime.fromtimestamp(taken_at, tz=timezone.utc)
                 ts_str = ts.strftime("%Y%m%dT%H%M%SZ")
-                media_path = account_dir / f"{ts_str}_{item.get('pk', 'unknown')}.jpg"
 
                 media_url = _best_media_url(item)
-                if not media_url or not _download_media(media_url, media_path):
+                if not media_url:
                     print(f"[scraper] Skipping item {ts_str} — no media URL")
+                    continue
+
+                image_bytes = _fetch_media_bytes(media_url)
+                if not image_bytes:
+                    print(f"[scraper] Skipping item {ts_str} — media fetch failed")
                     continue
 
                 link = _extract_link_from_item(item)
@@ -201,7 +202,7 @@ def capture_stories(log_path: str | None = None) -> list[StoryFrame]:
                 frame = StoryFrame(
                     account=account,
                     captured_at=ts.isoformat(),
-                    screenshot_path=str(media_path),
+                    image_bytes=image_bytes,
                     dom_text="",
                     links=links,
                 )
