@@ -7,6 +7,7 @@ from scraper import capture_stories
 from extractor import extract
 from normalizer import normalize
 from storage import save
+import datetime
 
 
 def run_once(log_path: str | None = None) -> None:
@@ -57,6 +58,7 @@ def run_scheduled(log_path: str | None = None) -> None:
         kwargs={"log_path": log_path},
         id="story_scraper",
     )
+    print(f"\n\nRUNNING - [{datetime.datetime.now()}]")
     print(
         f"[scheduler] Starting — will run every {config.SCRAPE_INTERVAL_MINUTES} minutes. "
         "Press Ctrl+C to stop."
