@@ -30,7 +30,6 @@ For all other categories, return the full schema below.
 Rules for full extraction:
 - Always return ONLY a valid JSON object, no markdown fences, no prose.
 - If a field cannot be determined, use null.
-- deadline should be YYYY-MM-DD if detectable, otherwise null
 - summary should be 1-2 sentences, clear and professional
 - For link_url, use the provided detected link — do not invent one.
 
@@ -39,7 +38,6 @@ JSON schema:
   "category": "internship" | "co-op" | "new_grad" | "hackathon" | "accelerator" | "info_session" | "other",
   "company": string | null,
   "title": string | null,
-  "deadline": string | null,
   "location": string | null,
   "link_url": string | null,
   "summary": string | null
@@ -72,7 +70,6 @@ def normalize(account: str, captured_at: str, raw_text: str, links: list[str]) -
         "category": "other",
         "company": None,
         "title": None,
-        "deadline": None,
         "location": None,
         "summary": None,
     }

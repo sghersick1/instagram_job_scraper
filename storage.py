@@ -15,7 +15,7 @@ SHEET_COLUMNS = [
     "company",
     "category",
     "title",
-    "deadline",
+    "Age",
     "location",
     "link_url",
     "summary",
