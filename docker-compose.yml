@@ -4,6 +4,7 @@ services:
     env_file: .env
     environment:
       - PYTHONUNBUFFERED=1
+    command: ["--schedule"]
     volumes:
       # Mount local session.json directly — skips GCS download for local testing
       - ./session.json:/app/session.json
